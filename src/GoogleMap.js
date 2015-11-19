@@ -5,15 +5,24 @@ import {
 } from "react";
 
 import {
-  findDOMNode,
-} from "react-dom";
-
-import {
   default as GoogleMapHolder,
   mapDefaultPropTypes,
   mapControlledPropTypes,
   mapEventPropTypes,
 } from "./creators/GoogleMapHolder";
+
+function associateComponentWithDOM (component, domEl) {
+  if (component.state.map) {
+    return;
+  }
+  const {containerTagName, containerProps, children, ...mapProps} = component.props;
+  //
+  // Create google.maps.Map instance so that dom is initialized before
+  // React's children creators.
+  //
+  const map = GoogleMapHolder._createMap(domEl, mapProps);
+  component.setState({ map });
+}
 
 export default class GoogleMap extends Component {
   static propTypes = {
@@ -78,18 +87,6 @@ export default class GoogleMap extends Component {
   state = {
   }
 
-  componentDidMount () {
-    const domEl = findDOMNode(this);
-    const {containerTagName, containerProps, children, ...mapProps} = this.props;
-    // TODO: support asynchronous load of google.maps API at this level.
-    //
-    // Create google.maps.Map instance so that dom is initialized before
-    // React's children creators.
-    //
-    const map = GoogleMapHolder._createMap(domEl, mapProps);
-    this.setState({ map });
-  }
-
   render () {
     const {containerTagName, containerProps, children, ...mapProps} = this.props;
     const child = this.state.map ? (
@@ -106,6 +103,9 @@ export default class GoogleMap extends Component {
       </GoogleMapHolder>
     ) : undefined;
 
-    return React.createElement(containerTagName, containerProps, child);
+    return React.createElement(containerTagName, {
+      ...containerProps,
+      ref: domEl => associateComponentWithDOM(this, domEl),
+    }, child);
   }
 }
