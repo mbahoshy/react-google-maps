@@ -2,7 +2,8 @@ import {default as React, Component} from "react";
 import {default as update} from "react-addons-update";
 import {default as FaSpinner} from "react-icons/lib/fa/spinner";
 
-import {default as ScriptjsGoogleMap} from "../../../../src/async/ScriptjsGoogleMap";
+import {default as ScriptjsLoader} from "../../../../src/async/ScriptjsLoader";
+import {default as GoogleMap} from "../../../../src/GoogleMap";
 import {default as Marker} from "../../../../src/Marker";
 
 /*
@@ -69,7 +70,7 @@ export default class AsyncGettingStarted extends Component {
   render () {
     // <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places" />
     return (
-      <ScriptjsGoogleMap
+      <ScriptjsLoader
         hostname={"maps.googleapis.com"}
         pathname={"/maps/api/js"}
         query={{v: `3.${ AsyncGettingStarted.version }`, libraries: "geometry,drawing,places"}}
@@ -89,25 +90,36 @@ export default class AsyncGettingStarted extends Component {
             />
           </div>
         }
-        // <GoogleMap> props
-        containerProps={{
-          ...this.props,
-          style: {
-            height: "100%",
-          },
-        }}
-        ref="map"
-        defaultZoom={3}
-        defaultCenter={{lat: -25.363882, lng: 131.044922}}
-        onClick={::this._handle_map_click}>
-        {this.state.markers.map((marker, index) => {
-          return (
-            <Marker
-              {...marker}
-              onRightclick={this._handle_marker_rightclick.bind(this, index)} />
-          );
-        })}
-      </ScriptjsGoogleMap>
+        googleMapElement={
+          <GoogleMap
+            containerProps={{
+              ...this.props,
+              style: {
+                height: "100%",
+              },
+            }}
+            ref={googleMap => {
+              // Wait until GoogleMap is fully loaded. Related to #133
+              setTimeout(() => {
+                console.log(googleMap)
+                console.log("Zoom: " + googleMap.getZoom());
+                console.log("Center: " + googleMap.getCenter());
+              }, 50);
+            }}
+            defaultZoom={3}
+            defaultCenter={{lat: -25.363882, lng: 131.044922}}
+            onClick={::this._handle_map_click}
+          >
+            {this.state.markers.map((marker, index) => {
+              return (
+                <Marker
+                  {...marker}
+                  onRightclick={this._handle_marker_rightclick.bind(this, index)} />
+              );
+            })}
+          </GoogleMap>
+        }
+      />
     );
   }
 }
